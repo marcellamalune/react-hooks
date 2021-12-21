@@ -12,6 +12,7 @@ function PokemonInfo({pokemonName}) {
   // 🐨 Have state for the pokemon (null)
   const [pokemon, setPokemon] = React.useState(null)
   const [error, setError] = React.useState(null)
+  const [state, setState] = React.useState('idle')
   // 🐨 use React.useEffect where the callback should be called whenever the
   // pokemon name changes.
   // 💰 DON'T FORGET THE DEPENDENCIES ARRAY!
@@ -19,13 +20,16 @@ function PokemonInfo({pokemonName}) {
   React.useEffect(() => {
     if (!pokemonName) return null
     setPokemon(null)
+    setState('pending')
     fetchPokemon(pokemonName)
         .then( pokemonData => {
             /* update all the state here */
-            setPokemon(pokemonData)})
+            setPokemon(pokemonData)
+            setState('resolved')
+        })
         .catch( error => {
-            console.log('errore:', error)
             setError(error)
+            setState('rejected')
         })
   }, [pokemonName])
   // 🐨 before calling `fetchPokemon`, clear the current pokemon state by setting it to null
@@ -37,18 +41,19 @@ function PokemonInfo({pokemonName}) {
   //   1. no pokemonName: 'Submit a pokemon'
   //   2. pokemonName but no pokemon: <PokemonInfoFallback name={pokemonName} />
   //   3. pokemon: <PokemonDataView pokemon={pokemon} />
-  if (!pokemonName) {
-    return 'Submit a pokemon'
-  } else if (error) {
-    return (
-        <div role="alert">
-            There was an error: <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
-        </div>
-    )
-  } else if (pokemonName && !pokemon) {
-    return <PokemonInfoFallback name={pokemonName} />
-  } else {
-    return <PokemonDataView pokemon={pokemon} />
+  switch (state) {
+    case 'pending':
+        return <PokemonInfoFallback name={pokemonName} />
+    case 'resolved':
+        return <PokemonDataView pokemon={pokemon} />
+    case 'rejected':
+        return (
+            <div role="alert">
+                There was an error: <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+            </div>
+        )
+    default:
+        return 'Submit a pokemon'
   }
 
   // 💣 remove this
